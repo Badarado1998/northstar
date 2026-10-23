@@ -6,7 +6,7 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start --port 3000",
-    "db:migrate": "node --import tsx scripts/migrate.ts",
+    "db:migrate": "node --env-file=.env --import tsx scripts/migrate.ts",
     "test": "node --import tsx --test tests/*.test.ts"
   },
   "dependencies": {

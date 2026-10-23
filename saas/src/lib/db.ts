@@ -52,7 +52,10 @@ export async function getDb(): Promise<Db> {
   }
   const db = postgresAdapter(globalDb.sql);
   if (!globalDb.migrated) {
-    globalDb.migrated = migrate(db).catch(error => {
+    // Schema is applied with `npm run db:migrate` (Neon). Never migrate on Vercel — serverless
+    // bundles may omit schema.sql, and copying .env can set NODE_ENV=development there.
+    const run = process.env.VERCEL ? Promise.resolve() : migrate(db);
+    globalDb.migrated = run.catch(error => {
       globalDb.migrated = undefined;
       throw error;
     });

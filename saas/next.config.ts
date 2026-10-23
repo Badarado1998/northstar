@@ -2,8 +2,12 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 
+const root = dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: dirname(fileURLToPath(import.meta.url)),
+  outputFileTracingRoot: root,
+  outputFileTracingIncludes: {
+    '/api/[...path]': ['./src/lib/schema.sql'],
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
