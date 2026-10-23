@@ -1,10 +1,12 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' | 'forgot' | 'reset' | 'verify' }) {
   const [message, setMessage] = useState('');
   const [ok, setOk] = useState(false);
   const [pending, setPending] = useState(false);
+  const [responseStatus, setResponseStatus] = useState(0);
   const [token, setToken] = useState('');
   useEffect(() => {
     if (mode === 'reset' || mode === 'verify') setToken(new URLSearchParams(window.location.search).get('token') ?? '');
@@ -15,6 +17,7 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' | 'forgot' | 'r
     setPending(true);
     setMessage('');
     setOk(false);
+    setResponseStatus(0);
     const form = new FormData(event.currentTarget);
     const path = mode === 'sign-in' ? '/api/auth/login'
       : mode === 'sign-up' ? '/api/auth/register'
@@ -31,6 +34,7 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' | 'forgot' | 'r
       const body = await response.json().catch(() => ({})) as { error?: string; devVerificationUrl?: string };
       setPending(false);
       if (!response.ok) {
+        setResponseStatus(response.status);
         setMessage(body.error ?? `Request failed (${response.status}).`);
         return;
       }
@@ -62,6 +66,13 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' | 'forgot' | 'r
     {mode === 'sign-in' || mode === 'sign-up' || mode === 'reset' ? <label>Password<input name="password" type="password" required minLength={10} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label> : null}
     {mode === 'reset' || mode === 'verify' ? <label>Token<input name="token" required value={token} onChange={event => setToken(event.target.value)} /></label> : null}
     <button className="button button-pine" type="submit" disabled={pending}>{pending ? 'Working…' : 'Continue'}</button>
-    {message ? <p role="alert" aria-live="polite" className={`text-sm ${ok ? 'text-pine' : 'text-[#9b2c2c]'}`}>{message}</p> : null}
+    {message ? <div role="alert" aria-live="polite" className="grid gap-2 text-sm">
+      <p className={ok ? 'text-pine' : 'text-[#9b2c2c]'}>{message}</p>
+      {!ok && mode === 'sign-up' && responseStatus === 409 ? <p className="text-ink/75">
+        <Link className="underline text-pine" href="/sign-in">Go to sign in</Link>
+        {' · '}
+        <Link className="underline text-pine" href="/forgot-password">Forgot password</Link>
+      </p> : null}
+    </div> : null}
   </form>;
 }

@@ -50,7 +50,7 @@ export async function registerUser(db: Db, mailer: Mailer, appUrl: string, input
     });
   } catch (error) {
     if (typeof error === 'object' && error && 'code' in error && (error as { code: string }).code === '23505') {
-      throw new ServiceError(409, 'If this email can be used, check your inbox for the next step.');
+      throw new ServiceError(409, 'This email already has an account. Sign in below, or reset your password if you forgot it.');
     }
     throw error;
   }
