@@ -15,6 +15,7 @@ import { paystackClient, verifySignature } from './paystack';
 import { encryptSecret } from './secrets';
 import { allowRate } from './rate-limit';
 import { assertSameOrigin, clientIp, paymentReference, readBody, secretsEqual } from './security';
+import { isPlatformAdmin } from './admin';
 
 async function context(request: Request): Promise<{ db: Db; principal: Principal | null }> {
   const db = await getDb();
@@ -40,8 +41,7 @@ function requireVerifiedUser(principal: Principal | null): Principal {
 }
 
 async function requireAdmin(db: Db, principal: Principal): Promise<void> {
-  const rows = await db.query(`SELECT 1 FROM platform_admins WHERE user_id = $1`, [principal.userId]);
-  if (!rows.length) throw new ServiceError(403, 'Administrator access is required.');
+  if (!await isPlatformAdmin(db, principal.userId)) throw new ServiceError(403, 'Administrator access is required.');
 }
 
 export async function accountSnapshot(db: Db, principal: Principal) {
@@ -104,7 +104,13 @@ export async function dispatch(request: Request, method: string, path: string): 
   }
   if (method === 'GET' && path === 'auth/session') {
     if (!principal) return json({ signedIn: false });
-    return json({ signedIn: true, email: principal.email, name: principal.name, emailVerified: principal.emailVerified });
+    return json({
+      signedIn: true,
+      email: principal.email,
+      name: principal.name,
+      emailVerified: principal.emailVerified,
+      platformAdmin: await isPlatformAdmin(db, principal.userId),
+    });
   }
   if (method === 'POST' && path === 'auth/resend-verification') {
     assertSameOrigin(request);

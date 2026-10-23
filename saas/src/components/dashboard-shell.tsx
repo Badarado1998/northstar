@@ -11,10 +11,9 @@ const siteLinks = [['Features', '/features'], ['Models', '/models'], ['Pricing',
 const sidebar = [
   { label: 'Overview', href: '/account', icon: 'fa-gauge-high' },
   { label: 'Billing', href: '/account/billing', icon: 'fa-credit-card' },
-  { label: 'Site home', href: '/', icon: 'fa-house' },
 ] as const;
 
-type Session = { signedIn: boolean; email?: string; emailVerified?: boolean };
+type Session = { signedIn: boolean; email?: string; emailVerified?: boolean; platformAdmin?: boolean };
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,6 +33,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const email = session?.email ?? '';
   const onAdmin = pathname.startsWith('/admin');
+  const showAdmin = Boolean(session?.platformAdmin);
 
   return <>
     <DashboardScripts />
@@ -56,9 +56,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Link className="nav-link" href={href}>{label}</Link>
               </li>
             ))}
-            <li className="nav-item d-none d-md-block">
-              <Link className={`nav-link${onAdmin ? ' fw-bold' : ''}`} href="/admin">Admin</Link>
-            </li>
+            {showAdmin ? (
+              <li className="nav-item d-none d-md-block">
+                <Link className={`nav-link${onAdmin ? ' fw-bold' : ''}`} href="/admin">Admin</Link>
+              </li>
+            ) : null}
             <li className="nav-item dropdown">
               <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i className="far fa-user me-1" />
@@ -85,7 +87,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <nav className="mt-2">
             <ul className="nav sidebar-menu flex-column" role="menu">
               {sidebar.map(item => {
-                const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return <li key={item.href} className="nav-item">
                   <Link href={item.href} className={`nav-link${active ? ' active' : ''}`}>
                     <i className={`nav-icon fas ${item.icon}`} />
@@ -93,12 +95,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </li>;
               })}
-              <li className="nav-item">
-                <Link href="/admin" className={`nav-link${onAdmin ? ' active' : ''}`}>
-                  <i className="nav-icon fas fa-user-shield" />
-                  <p>Admin</p>
-                </Link>
-              </li>
+              {showAdmin ? (
+                <li className="nav-item">
+                  <Link href="/admin" className={`nav-link${onAdmin ? ' active' : ''}`}>
+                    <i className="nav-icon fas fa-user-shield" />
+                    <p>Admin</p>
+                  </Link>
+                </li>
+              ) : null}
             </ul>
           </nav>
         </div>

@@ -18,7 +18,7 @@ export function Footer() {
   return <footer className="mx-auto mt-16 max-w-6xl border-t border-line px-6 py-8 text-sm text-ink/70">
     <p>{BRAND.attribution}. <a href={BRAND.attributionUrl}>{BRAND.attributionUrl.replace('https://', '')}</a></p>
     <div className="mt-3 flex flex-wrap gap-4">
-      <Link href="/faq">FAQ</Link><Link href="/support">Support</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/licenses">Licenses</Link><Link href="/admin">Admin</Link>
+      <Link href="/faq">FAQ</Link><Link href="/support">Support</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/licenses">Licenses</Link>
     </div>
   </footer>;
 }
