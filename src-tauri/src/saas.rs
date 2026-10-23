@@ -149,7 +149,7 @@ fn string_at(value: &Value, pointer: &str) -> String {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct AccountView {
+pub struct AccountView {
     signed_in: bool,
     product_name: String,
     email: String,
@@ -211,7 +211,7 @@ pub async fn saas_status() -> Result<AccountView, String> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct SignInStart { user_code: String, verification_uri: String }
+pub struct SignInStart { pub user_code: String, pub verification_uri: String }
 
 #[tauri::command]
 pub async fn saas_sign_in_start() -> Result<SignInStart, String> {
@@ -232,7 +232,7 @@ pub async fn saas_sign_in_start() -> Result<SignInStart, String> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct SignInPoll { status: String, account: Option<AccountView> }
+pub struct SignInPoll { pub status: String, pub account: Option<AccountView> }
 
 #[tauri::command]
 pub async fn saas_sign_in_poll() -> Result<SignInPoll, String> {
@@ -273,11 +273,11 @@ pub async fn saas_sign_out() -> Result<(), String> {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct CheckoutInput { purpose: String, plan_id: Option<String>, package_id: Option<String> }
+pub struct CheckoutInput { pub purpose: String, pub plan_id: Option<String>, pub package_id: Option<String> }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Checkout { authorization_url: String }
+pub struct Checkout { pub authorization_url: String }
 
 #[tauri::command]
 pub async fn saas_checkout(input: CheckoutInput) -> Result<Checkout, String> {
@@ -292,7 +292,7 @@ pub async fn saas_checkout(input: CheckoutInput) -> Result<Checkout, String> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Catalog { plans: Value, packages: Value }
+pub struct Catalog { pub plans: Value, pub packages: Value }
 
 #[tauri::command]
 pub async fn saas_catalog() -> Result<Catalog, String> {
@@ -302,11 +302,11 @@ pub async fn saas_catalog() -> Result<Catalog, String> {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct CompleteInput { model_id: String, prompt: String }
+pub struct CompleteInput { pub model_id: String, pub prompt: String }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Completion { text: String, billed_micros: String, already_completed: bool }
+pub struct Completion { pub text: String, pub billed_micros: String, pub already_completed: bool }
 
 #[tauri::command]
 pub async fn saas_complete(input: CompleteInput) -> Result<Completion, String> {
