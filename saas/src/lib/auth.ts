@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { startTrial } from './billing';
 import type { Db } from './db';
 import type { Mailer } from './mailer';
+import { emailConfigured } from './mailer';
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordError, verifyPassword } from './passwords';
 import { allowRate } from './rate-limit';
 import { hashToken, newToken, normalizeEmail, userCode } from './tokens';
@@ -115,14 +116,21 @@ export async function verifyEmail(db: Db, token: string): Promise<void> {
   });
 }
 
-export async function requestPasswordReset(db: Db, mailer: Mailer, appUrl: string, emailRaw: string): Promise<void> {
+export async function requestPasswordReset(db: Db, mailer: Mailer, appUrl: string, emailRaw: string): Promise<{ devResetUrl?: string }> {
   const email = normalizeEmail(emailRaw);
-  if (!await allowRate(db, `reset:${email}`, 5, 3600)) return;
+  if (!await allowRate(db, `reset:${email}`, 5, 3600)) return {};
   const users = await db.query<{ id: string }>(`SELECT id::text FROM users WHERE lower(email) = $1 AND deleted_at IS NULL AND status = 'active'`, [email]);
-  if (!users[0]) return;
+  if (!users[0]) return {};
   const token = newToken();
+  const resetUrl = `${appUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
   await db.query(`INSERT INTO email_tokens (id, user_id, purpose, token_hash, expires_at) VALUES ($1, $2, 'reset', $3, now() + interval '30 minutes')`, [randomUUID(), users[0].id, hashToken(token)]);
-  await mailer.send({ to: email, subject: 'Reset your password', text: `Reset your password: ${appUrl}/reset-password?token=${token}` });
+  try {
+    await mailer.send({ to: email, subject: 'Reset your Northstar password', text: `You asked to reset your password.\n\nOpen this link (valid for 30 minutes):\n${resetUrl}\n\nIf you did not ask for this, you can ignore this email.` });
+  } catch (error) {
+    console.error('Password reset email was not sent.', error);
+  }
+  if (!emailConfigured()) return { devResetUrl: resetUrl };
+  return {};
 }
 
 export async function resetPassword(db: Db, token: string, password: string): Promise<void> {

@@ -1,2 +1,15 @@
 import { AuthForm } from '@/components/auth-form';
-export default function ForgotPage() { return <main className="px-6 py-12"><h1 className="mb-6 text-center font-serif text-4xl">Reset password</h1><AuthForm mode="forgot" /></main>; }
+import { AuthShell } from '@/components/auth-shell';
+import Link from 'next/link';
+
+export default function ForgotPasswordPage() {
+  return <AuthShell
+    title="Forgot password"
+    lead="Enter the email you used for Northstar. We will send a link to choose a new password."
+    backHref="/sign-in"
+    backLabel="Back to sign in"
+    footer={<><Link className="text-pine underline" href="/sign-up">Need an account?</Link></>}
+  >
+    <AuthForm mode="forgot" />
+  </AuthShell>;
+}

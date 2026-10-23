@@ -1,2 +1,15 @@
 import { AuthForm } from '@/components/auth-form';
-export default function SignUpPage() { return <main className="px-6 py-12"><h1 className="mb-6 text-center font-serif text-4xl">Create an account</h1><AuthForm mode="sign-up" /></main>; }
+import { AuthShell } from '@/components/auth-shell';
+import Link from 'next/link';
+
+export default function SignUpPage() {
+  return <AuthShell
+    title="Create your account"
+    lead="One account for billing on the web and signing in from the Northstar desktop app."
+    backHref="/sign-in"
+    backLabel="Sign in instead"
+    footer={<><Link className="text-pine underline" href="/sign-in">Already have an account?</Link></>}
+  >
+    <AuthForm mode="sign-up" />
+  </AuthShell>;
+}

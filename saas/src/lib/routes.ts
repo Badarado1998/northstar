@@ -109,8 +109,11 @@ export async function dispatch(request: Request, method: string, path: string): 
   }
   if (method === 'POST' && path === 'auth/forgot') {
     const input = await body(request);
-    await requestPasswordReset(db, mailerFromEnv(), appUrl(), text(input.email));
-    return json({ ok: true });
+    const reset = await requestPasswordReset(db, mailerFromEnv(), appUrl(), text(input.email));
+    return json({
+      ok: true,
+      ...(!emailConfigured() && reset.devResetUrl ? { devResetUrl: reset.devResetUrl } : {}),
+    });
   }
   if (method === 'POST' && path === 'auth/reset') {
     const input = await body(request);
