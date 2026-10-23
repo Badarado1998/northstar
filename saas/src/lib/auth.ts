@@ -105,6 +105,24 @@ export async function principalFromAccessToken(db: Db, accessToken: string): Pro
   return { userId: row.user_id, accountId: row.account_id, email: row.email, name: row.name, emailVerified: Boolean(row.email_verified_at), status: row.status, deviceId: row.device_id };
 }
 
+export async function resendVerificationEmail(db: Db, mailer: Mailer, appUrl: string, userId: string, email: string): Promise<{ devVerificationUrl?: string }> {
+  if (!await allowRate(db, `verify-resend:${email}`, 3, 3600)) throw new ServiceError(429, 'Too many verification emails. Try again in an hour.');
+  const rows = await db.query<{ email_verified_at: string | null }>(`SELECT email_verified_at::text FROM users WHERE id = $1 AND deleted_at IS NULL AND status = 'active'`, [userId]);
+  if (!rows[0]) throw new ServiceError(404, 'Account not found.');
+  if (rows[0].email_verified_at) throw new ServiceError(400, 'This email is already verified.');
+  const verificationToken = newToken();
+  await db.query(`UPDATE email_tokens SET used_at = now() WHERE user_id = $1 AND purpose = 'verify' AND used_at IS NULL`, [userId]);
+  await db.query(`INSERT INTO email_tokens (id, user_id, purpose, token_hash, expires_at) VALUES ($1, $2, 'verify', $3, now() + interval '24 hours')`, [randomUUID(), userId, hashToken(verificationToken)]);
+  const verifyUrl = `${appUrl.replace(/\/$/, '')}/verify-email?token=${verificationToken}`;
+  try {
+    await mailer.send({ to: email, subject: 'Verify your Northstar email', text: `Confirm your email to use billing and the desktop app:\n\n${verifyUrl}\n\nThis link expires in 24 hours.` });
+  } catch (error) {
+    console.error('Verification email was not sent.', error);
+  }
+  if (!emailConfigured()) return { devVerificationUrl: verifyUrl };
+  return {};
+}
+
 export async function verifyEmail(db: Db, token: string): Promise<void> {
   const rows = await db.query<{ id: string; user_id: string }>(`SELECT id::text, user_id::text FROM email_tokens
     WHERE token_hash = $1 AND purpose = 'verify' AND used_at IS NULL AND expires_at > now()`, [hashToken(token)]);

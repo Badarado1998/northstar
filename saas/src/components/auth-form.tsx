@@ -87,7 +87,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         return;
       }
       if (mode === 'sign-in') {
-        window.location.href = '/account';
+        const verified = (body as { emailVerified?: boolean }).emailVerified;
+        window.location.href = verified ? '/account' : '/verify-required';
         return;
       }
       if (mode === 'sign-up') {

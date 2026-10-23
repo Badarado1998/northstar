@@ -1,13 +1,16 @@
 import Link from 'next/link';
+import { AuthNav } from '@/components/auth-nav';
 import { BRAND } from '@/lib/brand';
 
 const links = [['Features', '/features'], ['Models', '/models'], ['Pricing', '/pricing'], ['Download', '/download'], ['Docs', '/docs']] as const;
 
 export function Header() {
-  return <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-    <Link href="/" className="font-serif text-2xl no-underline">{BRAND.productName}</Link>
-    <nav className="hidden gap-5 text-sm md:flex">{links.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}</nav>
-    <div className="flex gap-2 text-sm"><Link className="button button-line" href="/sign-in">Sign in</Link><Link className="button button-dark" href="/sign-up">Create account</Link></div>
+  return <header className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Link href="/" className="font-serif text-xl no-underline sm:text-2xl">{BRAND.productName}</Link>
+      <AuthNav />
+    </div>
+    <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-ink/80">{links.map(([label, href]) => <Link key={href} className="no-underline hover:text-pine" href={href}>{label}</Link>)}</nav>
   </header>;
 }
 

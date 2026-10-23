@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   addMember, deleteAccount, listDevices, loginUser, logoutSession, pollDevice, principalFromAccessToken,
-  principalFromWebToken, refreshDesktopSession, registerUser, requestPasswordReset, resetPassword, revokeDevice,
+  principalFromWebToken, refreshDesktopSession, registerUser, requestPasswordReset, resetPassword, resendVerificationEmail, revokeDevice,
   startDeviceAuthorization, verifyEmail, type Principal, ServiceError, approveDevice,
 } from './auth';
 import { applyVerifiedCharge, cancelAtPeriodEnd, closeExpiredPeriods, createCheckout, getPlan, listPlans } from './billing';
@@ -31,6 +31,12 @@ async function context(request: Request): Promise<{ db: Db; principal: Principal
 function requireUser(principal: Principal | null): Principal {
   if (!principal) throw new ServiceError(401, 'Sign in again.');
   return principal;
+}
+
+function requireVerifiedUser(principal: Principal | null): Principal {
+  const user = requireUser(principal);
+  if (!user.emailVerified) throw new ServiceError(403, 'Verify your email before using the account.');
+  return user;
 }
 
 async function requireAdmin(db: Db, principal: Principal): Promise<void> {
@@ -96,10 +102,21 @@ export async function dispatch(request: Request, method: string, path: string): 
     const showVerifyLink = process.env.NODE_ENV !== 'production' || !emailConfigured();
     return json({ userId: result.userId, ...(showVerifyLink ? { devVerificationUrl: verifyUrl } : {}) }, 201);
   }
+  if (method === 'GET' && path === 'auth/session') {
+    if (!principal) return json({ signedIn: false });
+    return json({ signedIn: true, email: principal.email, name: principal.name, emailVerified: principal.emailVerified });
+  }
+  if (method === 'POST' && path === 'auth/resend-verification') {
+    assertSameOrigin(request);
+    const user = requireUser(principal);
+    const sent = await resendVerificationEmail(db, mailerFromEnv(), appUrl(), user.userId, user.email);
+    return json({ ok: true, ...(!emailConfigured() && sent.devVerificationUrl ? { devVerificationUrl: sent.devVerificationUrl } : {}) });
+  }
   if (method === 'POST' && path === 'auth/login') {
     const input = await body(request);
     const result = await loginUser(db, text(input.email), text(input.password, 128));
-    return json({ ok: true }, 200, { 'set-cookie': sessionCookie(result.sessionToken) });
+    const session = await principalFromWebToken(db, result.sessionToken);
+    return json({ ok: true, emailVerified: Boolean(session?.emailVerified) }, 200, { 'set-cookie': sessionCookie(result.sessionToken) });
   }
   if (method === 'POST' && path === 'auth/logout') {
     assertSameOrigin(request);
@@ -134,7 +151,7 @@ export async function dispatch(request: Request, method: string, path: string): 
   if (method === 'POST' && path === 'auth/device/approve') {
     assertSameOrigin(request);
     const input = await body(request);
-    await approveDevice(db, requireUser(principal), text(input.userCode, 20));
+    await approveDevice(db, requireVerifiedUser(principal), text(input.userCode, 20));
     return json({ ok: true });
   }
   if (method === 'POST' && path === 'auth/device/token') {
@@ -146,7 +163,7 @@ export async function dispatch(request: Request, method: string, path: string): 
     return json(await refreshDesktopSession(db, text(input.refreshToken, 200), ip));
   }
   if (method === 'GET' && path === 'account') {
-    const user = requireUser(principal);
+    const user = requireVerifiedUser(principal);
     return json(await accountSnapshot(db, user));
   }
   if (method === 'DELETE' && path === 'account') {
@@ -154,17 +171,17 @@ export async function dispatch(request: Request, method: string, path: string): 
     await deleteAccount(db, requireUser(principal));
     return json({ ok: true }, 200, { 'set-cookie': clearSessionCookie() });
   }
-  if (method === 'GET' && path === 'account/devices') return json({ devices: await listDevices(db, requireUser(principal).accountId) });
+  if (method === 'GET' && path === 'account/devices') return json({ devices: await listDevices(db, requireVerifiedUser(principal).accountId) });
   if (method === 'POST' && path === 'account/devices/revoke') {
     assertSameOrigin(request);
     const input = await body(request);
-    await revokeDevice(db, requireUser(principal), text(input.deviceId, 80));
+    await revokeDevice(db, requireVerifiedUser(principal), text(input.deviceId, 80));
     return json({ ok: true });
   }
   if (method === 'POST' && path === 'account/members') {
     assertSameOrigin(request);
     const input = await body(request);
-    await addMember(db, requireUser(principal), text(input.email));
+    await addMember(db, requireVerifiedUser(principal), text(input.email));
     return json({ ok: true });
   }
   if (method === 'GET' && path === 'billing/plans') {
@@ -175,10 +192,10 @@ export async function dispatch(request: Request, method: string, path: string): 
       packages: packages.map(pack => ({ ...pack, priceLabel: formatSubunits(money((pack as { price_subunits: string }).price_subunits), (pack as { currency: string }).currency), creditLabel: formatUsd(money((pack as { credit_micros: string }).credit_micros)) })),
     });
   }
-  if (method === 'GET' && path === 'billing/summary') return json(await accountSnapshot(db, requireUser(principal)));
+  if (method === 'GET' && path === 'billing/summary') return json(await accountSnapshot(db, requireVerifiedUser(principal)));
   if (method === 'POST' && path === 'billing/checkout') {
     assertSameOrigin(request);
-    const user = requireUser(principal);
+    const user = requireVerifiedUser(principal);
     if (!await allowRate(db, `checkout:${user.accountId}`, 12, 3600)) throw new ServiceError(429, 'Too many checkout attempts. Try again later.');
     const input = await body(request);
     const purpose = text(input.purpose, 20);
@@ -190,13 +207,13 @@ export async function dispatch(request: Request, method: string, path: string): 
   }
   if (method === 'POST' && path === 'billing/cancel') {
     assertSameOrigin(request);
-    const user = requireUser(principal);
+    const user = requireVerifiedUser(principal);
     await cancelAtPeriodEnd(db, user.accountId);
     const sub = await db.query<{ provider_subscription_code: string | null }>(`SELECT provider_subscription_code FROM subscriptions WHERE account_id = $1`, [user.accountId]);
     return json({ ok: true, paystackManaged: Boolean(sub[0]?.provider_subscription_code), note: sub[0]?.provider_subscription_code ? 'The local subscription ends at the period boundary. Disable the matching Paystack plan in the Paystack dashboard so it does not charge again. Paystack disable also requires an email token that is not stored here.' : 'The subscription ends at the period boundary. Included credits expire then. Purchased credits stay.' });
   }
   if (method === 'POST' && path === 'v1/ai/chat') {
-    const user = requireUser(principal);
+    const user = requireVerifiedUser(principal);
     const input = await body(request);
     const messages: ChatMessage[] = [];
     if (Array.isArray(input.messages)) {
@@ -217,7 +234,7 @@ export async function dispatch(request: Request, method: string, path: string): 
     });
     return json({ ...result, billedMicros: result.billedMicros.toString(), providerCostMicros: result.providerCostMicros.toString(), usage: { inputTokens: result.usage.inputTokens.toString(), outputTokens: result.usage.outputTokens.toString(), cacheReadTokens: result.usage.cacheReadTokens.toString(), cacheWriteTokens: result.usage.cacheWriteTokens.toString() } });
   }
-  if (path.startsWith('admin/')) return admin(request, method, path, db, requireUser(principal));
+  if (path.startsWith('admin/')) return admin(request, method, path, db, requireVerifiedUser(principal));
   return json({ error: 'Not found.' }, 404);
 }
 

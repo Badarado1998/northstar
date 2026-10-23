@@ -39,6 +39,7 @@ export function AccountPanel() {
     const [summary, deviceList, catalog] = await Promise.all([
       fetch('/api/account').then(async response => {
         if (response.status === 401) { window.location.href = '/sign-in'; return null; }
+        if (response.status === 403) { window.location.href = '/verify-required'; return null; }
         return response.json() as Promise<Snapshot & { error?: string }>;
       }),
       fetch('/api/account/devices').then(response => response.ok ? response.json() as Promise<{ devices: Device[] }> : { devices: [] }),
@@ -89,12 +90,11 @@ export function AccountPanel() {
 
   if (!account) return <main className="mx-auto max-w-4xl px-6 py-12"><p>{error || 'Loading account…'}</p></main>;
   const allowance = account.plan?.allowanceLabel ?? '$0.00';
-  return <main className="mx-auto grid max-w-5xl gap-6 px-6 py-12">
-    <div className="flex items-end justify-between gap-4">
-      <div><p className="text-sm text-ink/60">{account.email}</p><h1 className="font-serif text-5xl">{account.plan?.name ?? 'No plan'}</h1></div>
-      <button className="button button-line" onClick={signOut}>Sign out</button>
+  return <main className="mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:px-6 sm:py-12">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div><p className="text-sm text-ink/60">{account.email}</p><h1 className="font-serif text-4xl sm:text-5xl">{account.plan?.name ?? 'No plan'}</h1></div>
+      <button className="button button-line w-full sm:w-auto" onClick={signOut}>Sign out</button>
     </div>
-    {!account.emailVerified ? <p className="panel p-4 text-sm">Verify your email before checkout or desktop sign-in. Open the link from your inbox, or the development link shown at registration.</p> : null}
     {account.lowCredit ? <p className="panel border-copper p-4 text-sm">Included platform credits are low. Hosted model calls stop at zero. Purchased credits are separate.</p> : null}
     {error ? <p className="text-sm text-copper">{error}</p> : null}
     {message ? <p className="text-sm">{message}</p> : null}
@@ -106,8 +106,8 @@ export function AccountPanel() {
     <section className="panel p-5">
       <h2 className="font-serif text-2xl">Plans</h2>
       <p className="mt-1 text-sm text-ink/70">Status: {account.plan?.status ?? 'none'}{account.plan?.periodEnd ? ` · renews or ends ${account.plan.periodEnd.slice(0, 10)}` : ''}{account.plan?.cancelAtPeriodEnd ? ' · cancellation scheduled' : ''}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {plans.filter(plan => plan.self_serve && plan.id !== 'free').map(plan => <button key={plan.id} className="button button-pine" onClick={() => checkout('subscription', plan.id)}>{plan.name} · {plan.priceLabel} · {plan.allowanceLabel}</button>)}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        {plans.filter(plan => plan.self_serve && plan.id !== 'free').map(plan => <button key={plan.id} className="button button-pine w-full justify-center text-left sm:w-auto" onClick={() => checkout('subscription', plan.id)}>{plan.name} · {plan.priceLabel} · {plan.allowanceLabel}</button>)}
         {account.plan && account.plan.id !== 'free' ? <button className="button button-line" onClick={() => checkout('renewal', account.plan?.id)}>Renew current plan</button> : null}
         {account.plan && account.plan.id !== 'free' && !account.plan.cancelAtPeriodEnd ? <button className="button button-line" onClick={cancel}>Cancel at period end</button> : null}
       </div>
