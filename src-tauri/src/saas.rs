@@ -236,10 +236,10 @@ struct SignInPoll { status: String, account: Option<AccountView> }
 
 #[tauri::command]
 pub async fn saas_sign_in_poll() -> Result<SignInPoll, String> {
-    let pending = pending().lock().await;
-    let Some(current) = pending.as_ref() else { return Err("Start sign-in first.".into()) };
+    let guard = pending().lock().await;
+    let Some(current) = guard.as_ref() else { return Err("Start sign-in first.".into()) };
     let device_code = current.device_code.clone();
-    drop(pending);
+    drop(guard);
     let polled = request(reqwest::Method::POST, "auth/device/token", None, Some(json!({ "deviceCode": device_code }))).await?;
     let status = string_at(&polled, "/status");
     if status == "pending" { return Ok(SignInPoll { status, account: None }); }

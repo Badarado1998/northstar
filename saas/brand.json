@@ -14,9 +14,9 @@
   "accent": "#1f6f54",
   "accentWarm": "#c46b3a",
   "downloads": {
-    "macArm": "",
-    "macIntel": "",
-    "windowsX64": "",
-    "windowsArm": ""
+    "macArm": "https://github.com/Badarado1998/northstar/releases/download/v0.3.28/PandaCode-macOS-arm64.dmg",
+    "macIntel": "https://github.com/Badarado1998/northstar/releases/download/v0.3.28/PandaCode-macOS-x64.dmg",
+    "windowsX64": "https://github.com/Badarado1998/northstar/releases/download/v0.3.28/PandaCode-Windows-x64-setup.exe",
+    "windowsArm": "https://github.com/Badarado1998/northstar/releases/download/v0.3.28/PandaCode-Windows-arm64-setup.exe"
   }
 }
