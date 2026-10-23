@@ -1,10 +1,8 @@
-/* Automatic updates from GitHub Releases. The app checks the latest release's
- * latest.json (tauri.conf.json `plugins.updater`) shortly after launch and every six
- * hours, downloads a newer version in the background, and installs it with a restart
- * once no agent is working and the window has been idle for a while, so a restart never
- * cuts a run short. Every download is verified against the public key built into the
- * app before it installs. The request carries no personal data, and turning automatic
- * updates off in Settings → About stops it. The browser preview never checks. */
+/* Automatic updates from the signed endpoint in tauri.conf.json. The app checks
+ * shortly after launch and every six hours, downloads a newer version in the
+ * background, and installs it with a restart once no agent is working and the
+ * window has been idle. Every download is verified against the public key built
+ * into the app. The request carries no personal data. The browser preview never checks. */
 import { call, preview } from './bridge';
 import { CHECK_EVERY, readyToRestart, type UpdateState } from './app-updates-policy';
 export { describeUpdate, type UpdateState } from './app-updates-policy';

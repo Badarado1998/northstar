@@ -1364,6 +1364,9 @@ export async function invoke<T>(command: string, args: Record<string, any>): Pro
     }
     case 'write_terminal': emit('terminal-event', { terminalId: args.terminalId, data: args.data === '\r' ? '\r\nPreview mode — no commands executed.\r\n$ ' : args.data }); break;
     case 'resize_terminal': case 'close_terminal': break;
+    case 'saas_status': result = { signedIn: false, productName: 'Northstar', email: '', planName: '', planId: '', planStatus: '', periodEnd: '', allowanceLabel: '', includedLabel: '', topupLabel: '', reservedLabel: '', lowCredit: false, devicesActive: 0, devicesAllowance: 0, allowTopups: false, note: 'Sign-in, payments, and platform-model calls run in the desktop app.' }; break;
+    case 'saas_sign_in_start': case 'saas_sign_in_poll': case 'saas_sign_out': case 'saas_checkout': case 'saas_catalog': case 'saas_complete':
+      throw new Error('Account billing runs in the desktop app.');
     default: throw new Error(`Unknown preview command: ${command}`);
   }
   return structuredClone(result) as T;

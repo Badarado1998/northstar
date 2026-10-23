@@ -1,4 +1,7 @@
 node_modules/
+saas/node_modules/
+saas/.next/
+saas/tsconfig.tsbuildinfo
 __pycache__/
 dist/
 src-tauri/target/

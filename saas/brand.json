@@ -1,0 +1,22 @@
+{
+  "productName": "Northstar",
+  "installerProductName": "PandaCode",
+  "windowTitle": "Northstar",
+  "tagline": "A desktop workspace for coding agents, with metered platform models.",
+  "identifier": "ai.pandacode.desktop",
+  "apiBaseUrl": "https://app.bada.com.ng",
+  "websiteUrl": "https://app.bada.com.ng",
+  "supportUrl": "https://app.bada.com.ng/support",
+  "updateEndpoint": "https://updates.northstar.invalid/desktop/latest.json",
+  "attribution": "This is a fork of PandaCode",
+  "attributionUrl": "https://github.com/aicodeking/pandacode",
+  "licenseName": "PandaCode License",
+  "accent": "#1f6f54",
+  "accentWarm": "#c46b3a",
+  "downloads": {
+    "macArm": "",
+    "macIntel": "",
+    "windowsX64": "",
+    "windowsArm": ""
+  }
+}

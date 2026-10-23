@@ -10,8 +10,15 @@ terminal and a browser in one window.
 
 PandaCode is free and open source under the [PandaCode License](LICENSE), the MIT
 License with one addition: forks that are used commercially or released publicly
-must say "This is a fork of PandaCode" and link to this repository. There is no
-account, no license key and no telemetry.
+must say "This is a fork of PandaCode" and link to this repository.
+
+**This is a fork of PandaCode** ([https://github.com/aicodeking/pandacode](https://github.com/aicodeking/pandacode)).
+The desktop workspace is unchanged for local agents, Git, files, and terminals.
+The optional Northstar account in Settings → Account & billing is only for
+platform-model credits. Installed coding CLIs keep their own sign-in and are
+not billed to that allowance. Commercial installers are published from the
+website when a signed build exists; the links below are the upstream PandaCode
+releases, not this fork's branded installers.
 
 Built with Tauri 2, Rust, SQLite and plain TypeScript. It uses the operating
 system's webview: no bundled Chromium, resident Node server, React runtime or
@@ -114,10 +121,9 @@ Discord, WhatsApp or a browser too.
 
 ## Privacy
 
-- **No telemetry, no analytics, no accounts.** PandaCode does not phone home.
-- **Your code stays on your machine.** Projects, conversations and settings are
-  stored locally in SQLite. Prompts go only to the coding CLI or service you
-  pick, under that provider's own terms.
+- **Local work stays local.** Projects, conversations, and settings remain in SQLite on this computer. There is no analytics SDK.
+- **An optional account meters platform models.** Settings → Account talks to the Northstar service for sign-in, subscription status, and one platform-model completion at a time. Installed coding CLIs are not sent there and are not billed to the allowance.
+- **Your code stays on your machine.** Prompts for a local agent go only to the CLI you pick. A platform completion sends only the text you type in Account & billing.
 - **It only talks to services you choose.** Provider keys (GLM, MiMo, DeepSeek, Command Code, cloud
   sandboxes, bot channels) live in the system keychain and are sent only to
   that provider.

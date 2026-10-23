@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { background: #f3f0e7; color: #14221c; }
+a { text-underline-offset: 3px; }
+.panel { background: white; border: 1px solid #d9d3c5; border-radius: 18px; }
+input, select, textarea { width: 100%; border: 1px solid #d9d3c5; border-radius: 10px; padding: 10px 12px; background: white; }
+button, .button { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 10px 16px; font-weight: 600; }
+.button-dark { background: #14221c; color: #f3f0e7; }
+.button-pine { background: #1f6f54; color: white; }
+.button-line { border: 1px solid #d9d3c5; background: white; }

@@ -3948,7 +3948,7 @@ async function boot(): Promise<void> {
   if (state.view !== 'conversation' && state.generation === bootGeneration) { state.boardPanel = false; renderInspector(); renderBoardView(); }
   if (!preview && !state.providers.some(p => p.installed)) notify('Open Settings to check your installed agent CLIs.');
 }
-// PandaCode's own updates: checked on GitHub Releases, installed when no agent is working.
+// App updates: checked against the signed endpoint, installed when no agent is working.
 const updates = startAppUpdates({ busy: () => state.sessions.some(task => isRunning(task.id)), notify });
 {
   const pill = $('#update-status');

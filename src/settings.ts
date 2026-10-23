@@ -7,6 +7,7 @@ import type { Project, Provider, ProviderId } from './types';
 import { mountOverlaySettings } from './overlay-settings';
 import { mountSupportDetails } from './support-settings';
 import { aboutSettingsHtml, mountAboutSettings } from './about-settings';
+import { accountSettingsHtml, mountAccountSettings } from './account-settings';
 import { mountResourceUsage, resourceUsageHtml } from './resource-usage-settings';
 import { colorsSummary } from './theme-settings';
 import { mountAgentTeams, type AgentTeamsOptions } from './agent-teams';
@@ -20,7 +21,7 @@ import type { RemoteHost } from './remote-types';
 /** Panels that live elsewhere and are embedded here: each mounts into a host and returns its cleanup. */
 type Embed = (host: HTMLElement) => Promise<() => void>;
 
-export type SettingsSection = 'general' | 'appearance' | 'agents' | 'providers' | 'teams' | 'tools' | 'skills' | 'cloud' | 'remote' | 'github' | 'about';
+export type SettingsSection = 'general' | 'account' | 'appearance' | 'agents' | 'providers' | 'teams' | 'tools' | 'skills' | 'cloud' | 'remote' | 'github' | 'about';
 
 interface SettingsOptions {
   providers: Provider[];
@@ -56,6 +57,7 @@ export interface SettingsView { show(section: SettingsSection): void; dispose():
 /** The groups in the left column, in order. Each names what it holds, not a vague umbrella. */
 export const SECTIONS: { id: SettingsSection; label: string; icon: string; description: string }[] = [
   { id: 'general', label: 'General', icon: 'settings', description: 'Text size, conversation density and the quick launcher.' },
+  { id: 'account', label: 'Account & billing', icon: 'lock', description: 'Sign in, your plan, platform-model credits and devices.' },
   { id: 'appearance', label: 'Appearance', icon: 'sun', description: 'Theme, accent colors and wallpapers.' },
   { id: 'agents', label: 'Agents', icon: 'bot', description: 'Your default agent, installed agents and their models.' },
   { id: 'providers', label: 'Providers', icon: 'server', description: 'Connections for Claude Code, GitHub Copilot CLI, GLM, MiMo, OpenCode and Antigravity.' },
@@ -76,6 +78,7 @@ function sectionHtml(id: SettingsSection, options: SettingsOptions): string {
   switch (id) {
     case 'general': return `<div class="settings-group">${uiSizeControls()}${switchRow('compact-mode', 'Compact conversation', 'Less space between messages.', options.compact)}${switchRow('expand-tool-activity', 'Expand tool activity', 'Show grouped activity expanded by default.', options.activityExpanded)}</div>
       <h3 class="settings-heading">Quick launcher</h3><div id="launcher-settings"></div>${options.projects ? '<h3 class="settings-heading">Projects</h3><div id="projects-settings" class="settings-group"></div>' : ''}`;
+    case 'account': return accountSettingsHtml();
     case 'appearance': return `<div class="settings-group">
         <div class="setting-row"><div><strong>Theme</strong><small>${options.theme === 'dark' ? 'Dark' : 'Light'}. Imported VS Code themes keep their own.</small></div><button type="button" class="secondary-button" data-action="toggle-theme">${icon(options.theme === 'dark' ? 'sun' : 'moon')}Use ${options.theme === 'dark' ? 'light' : 'dark'}</button></div>
         <div class="setting-row"><div><strong>Daily wallpapers</strong><small>A new scene for each part of the day.</small></div><input type="checkbox" class="settings-switch" id="daily-wallpapers" aria-label="Daily wallpapers" ${options.wallpapers ? 'checked' : ''}></div>
@@ -204,6 +207,7 @@ export function mountSettings(host: HTMLElement, options: SettingsOptions): Sett
     mounted.add(id);
     const panel = panels.get(id)!;
     if (id === 'general') cleanups.push(mountOverlaySettings(panel.querySelector<HTMLElement>('#launcher-settings')!));
+    if (id === 'account') cleanups.push(mountAccountSettings(panel.querySelector<HTMLElement>('#account-settings')!));
     if (id === 'remote' && options.remote) cleanups.push(mountRemoteSettings(panel.querySelector<HTMLElement>('#remote-settings')!, options.remote));
     if (id === 'general' && options.projects) cleanups.push(mountProjects(panel.querySelector<HTMLElement>('#projects-settings')!, options.projects));
     if (id === 'github' && options.github) cleanups.push(options.github(panel.querySelector<HTMLElement>('#github-settings')!));

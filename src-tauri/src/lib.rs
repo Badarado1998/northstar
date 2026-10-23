@@ -25,6 +25,7 @@ mod project_icon;
 mod simulator;
 mod vm;
 mod secret_store;
+mod saas;
 mod cloud;
 mod capabilities;
 mod vsix_themes;
@@ -3392,7 +3393,14 @@ pub fn run() {
                 browser::browser_action,
                 browser::browser_pick,
                 browser::browser_capture,
-                browser::browser_close
+                browser::browser_close,
+                saas::saas_status,
+                saas::saas_sign_in_start,
+                saas::saas_sign_in_poll,
+                saas::saas_sign_out,
+                saas::saas_checkout,
+                saas::saas_catalog,
+                saas::saas_complete
             ];
             handler(invoke)
         })

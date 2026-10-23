@@ -13,7 +13,7 @@
     "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "PandaCode",
+        "title": "Northstar",
         "width": 1440,
         "height": 940,
         "minWidth": 860,
@@ -68,7 +68,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM3OEQ0RkYwQ0I4QzRGODEKUldTQlQ0ekw4RStOTnhNYW9jL1pTZENocVU3TGNPeVVxcDdzdkN4d0s3R2lPekxGRitGLzVwM3oK",
       "endpoints": [
-        "https://github.com/aicodeking/pandacode/releases/latest/download/latest.json"
+        "https://updates.northstar.invalid/desktop/latest.json"
       ],
       "windows": {
         "installMode": "passive"

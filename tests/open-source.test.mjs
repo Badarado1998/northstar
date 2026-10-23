@@ -30,9 +30,13 @@ test('no app source references the paid PandaCode service or the old support por
   assert.deepEqual(offenders, []);
 });
 
-test('updates come only from signed GitHub Releases, and nothing reads license keys', async () => {
+test('updates come from the signed endpoint in brand.json, and nothing reads license keys', async () => {
   const config = JSON.parse(await readFile(join(root, 'src-tauri', 'tauri.conf.json'), 'utf8'));
-  assert.deepEqual(config.plugins?.updater?.endpoints, ['https://github.com/aicodeking/pandacode/releases/latest/download/latest.json']);
+  const brand = JSON.parse(await readFile(join(root, 'brand.json'), 'utf8'));
+  assert.deepEqual(config.plugins?.updater?.endpoints, [brand.updateEndpoint]);
+  assert.equal(config.plugins.updater.endpoints[0].startsWith('https://'), true);
+  assert.notEqual(config.plugins.updater.endpoints[0], 'https://github.com/aicodeking/pandacode/releases/latest/download/latest.json');
+  assert.equal(await readFile(join(root, 'saas', 'brand.json'), 'utf8'), await readFile(join(root, 'brand.json'), 'utf8'));
   assert.match(config.plugins.updater.pubkey, /^[A-Za-z0-9+/=]{40,}$/, 'a public key verifies every update');
   // Update files are produced only by builds that hold the signing key (scripts/release/build.mjs).
   assert.equal(config.bundle.createUpdaterArtifacts, undefined);
