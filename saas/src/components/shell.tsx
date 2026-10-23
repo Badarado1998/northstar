@@ -5,7 +5,7 @@ import { BRAND } from '@/lib/brand';
 const links = [['Features', '/features'], ['Models', '/models'], ['Pricing', '/pricing'], ['Download', '/download'], ['Docs', '/docs']] as const;
 
 export function Header() {
-  return <header className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-5">
+  return <header className="site-header relative z-50 mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-5">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Link href="/" className="font-serif text-xl no-underline sm:text-2xl">{BRAND.productName}</Link>
       <AuthNav />

@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 body { background: #f3f0e7; color: #14221c; }
+.site-header { position: sticky; top: 0; background: #f3f0e7; }
+.site-header nav a { position: relative; z-index: 1; }
 a { text-underline-offset: 3px; }
 .panel { background: white; border: 1px solid #d9d3c5; border-radius: 18px; }
 input, select, textarea { width: 100%; border: 1px solid #d9d3c5; border-radius: 10px; padding: 10px 12px; background: white; }
