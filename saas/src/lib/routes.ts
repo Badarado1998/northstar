@@ -9,7 +9,7 @@ import { getDb, type Db } from './db';
 import { completeChat, type ChatMessage } from './gateway';
 import { bearer, body, clearSessionCookie, json, readCookie, sessionCookie, text, appUrl } from './http';
 import { adjustCredits, balances, releaseStaleReservations } from './ledger';
-import { mailerFromEnv } from './mailer';
+import { emailConfigured, mailerFromEnv } from './mailer';
 import { formatSubunits, formatUsd, money } from './money';
 import { paystackClient, verifySignature } from './paystack';
 import { encryptSecret } from './secrets';
@@ -92,7 +92,9 @@ export async function dispatch(request: Request, method: string, path: string): 
   if (method === 'POST' && path === 'auth/register') {
     const input = await body(request);
     const result = await registerUser(db, mailerFromEnv(), appUrl(), { email: text(input.email), password: text(input.password, 128), name: text(input.name, 80) });
-    return json({ userId: result.userId, ...(process.env.NODE_ENV === 'production' ? {} : { devVerificationUrl: `${appUrl()}/verify-email?token=${result.verificationToken}` }) }, 201);
+    const verifyUrl = `${appUrl()}/verify-email?token=${result.verificationToken}`;
+    const showVerifyLink = process.env.NODE_ENV !== 'production' || !emailConfigured();
+    return json({ userId: result.userId, ...(showVerifyLink ? { devVerificationUrl: verifyUrl } : {}) }, 201);
   }
   if (method === 'POST' && path === 'auth/login') {
     const input = await body(request);

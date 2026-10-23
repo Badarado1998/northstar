@@ -7,7 +7,7 @@ import {
 } from './auth';
 import { getDb } from './db';
 import { appUrl } from './http';
-import { mailerFromEnv } from './mailer';
+import { emailConfigured, mailerFromEnv } from './mailer';
 
 export interface AuthState {
   error?: string;
@@ -31,8 +31,11 @@ export async function submitAuth(_previous: AuthState, formData: FormData): Prom
         password: field(formData, 'password'),
         name: field(formData, 'name'),
       });
-      const devUrl = process.env.NODE_ENV === 'production' ? '' : `${appUrl()}/verify-email?token=${result.verificationToken}`;
-      return { message: devUrl ? `Account created. Development verification link: ${devUrl}` : 'Account created. Check your email to verify it.' };
+      const verifyUrl = `${appUrl()}/verify-email?token=${result.verificationToken}`;
+      if (!emailConfigured()) {
+        return { message: `Account created. Verify your email with this link: ${verifyUrl}` };
+      }
+      return { message: 'Account created. Check your email to verify it.' };
     }
     if (mode === 'sign-in') {
       const result = await loginUser(db, field(formData, 'email'), field(formData, 'password'));

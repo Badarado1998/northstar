@@ -25,9 +25,13 @@ export function resendMailer(apiKey: string, from: string, fetchImpl: typeof fet
   };
 }
 
+export function emailConfigured(): boolean {
+  const key = process.env.RESEND_API_KEY?.trim() ?? '';
+  const from = process.env.MAIL_FROM?.trim() ?? '';
+  return key.startsWith('re_') && from.includes('@');
+}
+
 export function mailerFromEnv(): Mailer {
-  const key = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.MAIL_FROM?.trim();
-  if (key && from) return resendMailer(key, from);
+  if (emailConfigured()) return resendMailer(process.env.RESEND_API_KEY!.trim(), process.env.MAIL_FROM!.trim());
   return consoleMailer();
 }

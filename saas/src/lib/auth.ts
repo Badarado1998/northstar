@@ -57,7 +57,11 @@ export async function registerUser(db: Db, mailer: Mailer, appUrl: string, input
   await startTrial(db, accountId);
   const verificationToken = newToken();
   await db.query(`INSERT INTO email_tokens (id, user_id, purpose, token_hash, expires_at) VALUES ($1, $2, 'verify', $3, now() + interval '24 hours')`, [randomUUID(), userId, hashToken(verificationToken)]);
-  await mailer.send({ to: email, subject: 'Verify your email', text: `Confirm your account: ${appUrl}/verify-email?token=${verificationToken}` });
+  try {
+    await mailer.send({ to: email, subject: 'Verify your email', text: `Confirm your account: ${appUrl}/verify-email?token=${verificationToken}` });
+  } catch (error) {
+    console.error('Verification email was not sent.', error);
+  }
   return { userId, verificationToken };
 }
 
