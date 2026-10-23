@@ -16,6 +16,7 @@ import { encryptSecret } from './secrets';
 import { allowRate } from './rate-limit';
 import { assertSameOrigin, clientIp, paymentReference, readBody, secretsEqual } from './security';
 import { isPlatformAdmin } from './admin';
+import { getPublishedDownloads, parseDownloadInput, saveDownloadCatalog } from './downloads';
 
 async function context(request: Request): Promise<{ db: Db; principal: Principal | null }> {
   const db = await getDb();
@@ -91,6 +92,10 @@ async function paystack() {
 
 export async function dispatch(request: Request, method: string, path: string): Promise<Response> {
   if (method === 'GET' && path === 'health') return json({ ok: true });
+  if (method === 'GET' && path === 'downloads') {
+    const db = await getDb();
+    return json(await getPublishedDownloads(db));
+  }
   if (method === 'POST' && path === 'webhooks/paystack') return paystackWebhook(request);
   if ((method === 'POST' || method === 'GET') && path === 'cron/billing') return cron(request);
   const { db, principal } = await context(request);
@@ -375,6 +380,16 @@ async function admin(request: Request, method: string, path: string, db: Db, pri
     return json({ ok: true });
   }
   if (method === 'GET' && path === 'admin/finance') return json(await finance(db));
+  if (method === 'GET' && path === 'admin/downloads') return json(await getPublishedDownloads(db));
+  if (method === 'POST' && path === 'admin/downloads') {
+    const input = await body(request);
+    const catalog = parseDownloadInput(input as Record<string, unknown>);
+    await saveDownloadCatalog(db, catalog);
+    await db.query(`INSERT INTO admin_audit_logs (id, actor_user_id, action, target, metadata) VALUES ($1, $2, 'downloads.update', 'desktop', $3::jsonb)`, [
+      randomUUID(), principal.userId, JSON.stringify({ version: catalog.version, published: [catalog.macArm, catalog.macIntel, catalog.windowsX64, catalog.windowsArm].filter(Boolean).length }),
+    ]);
+    return json({ ok: true, ...catalog });
+  }
   return json({ error: 'Not found.' }, 404);
 }
 

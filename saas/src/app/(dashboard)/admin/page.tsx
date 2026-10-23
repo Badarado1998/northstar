@@ -1,5 +1,6 @@
 'use client';
 
+import { AdminDownloadsPanel } from '@/components/admin-downloads-panel';
 import { useEffect, useState } from 'react';
 
 export default function AdminPage() {
@@ -52,6 +53,8 @@ export default function AdminPage() {
     </div>
 
     {message ? <div className="alert alert-danger">{message}</div> : null}
+
+    <AdminDownloadsPanel />
 
     <div className="card mb-4">
       <div className="card-header"><h3 className="card-title">Overview</h3></div>
