@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "PandaCode",
+  "productName": "Northstar",
   "version": "0.3.28",
   "identifier": "ai.pandacode.desktop",
   "build": {

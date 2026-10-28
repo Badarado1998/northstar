@@ -1,12 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { mkdir, mkdtemp, readFile, rm, writeFile, access } from 'node:fs/promises';
 import { assertHostedRunner, bundleDirectory, selectPackage, smokeEnvironment, installArguments, observeProcess, linuxStartupCommand, cleanupSmokeDirectory, validatePackageSize } from './ci-startup-smoke.mjs';
 
+const tauriProduct = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../src-tauri/tauri.conf.json'), 'utf8')).productName;
+
 test('Linux starts Xvfb before the bus so portal services inherit the display', () => {
-  assert.deepEqual(linuxStartupCommand('/tmp/build with spaces/PandaCode.AppImage'), { command: 'xvfb-run', args: ['--auto-servernum', '--server-args=-screen 0 1440x940x24', 'dbus-run-session', '--', '/tmp/build with spaces/PandaCode.AppImage'] });
+  const image = `/tmp/build with spaces/${tauriProduct}.AppImage`;
+  assert.deepEqual(linuxStartupCommand(image), { command: 'xvfb-run', args: ['--auto-servernum', '--server-args=-screen 0 1440x940x24', 'dbus-run-session', '--', image] });
 });
 
 test('startup packages obey the same 200 MiB publisher size limit', () => {
@@ -55,12 +60,12 @@ test('startup smoke refuses local, self-hosted, and mismatched systems', () => {
 });
 
 test('only the exact target/version package is launched', () => {
-  assert.equal(selectPackage(['PandaCode_1.2.3_arm64-setup.exe'], '1.2.3', 'windows-aarch64'), 'PandaCode_1.2.3_arm64-setup.exe');
-  assert.equal(selectPackage(['PandaCode_1.2.3_x64-setup.exe', 'PandaCode_1.2.3_x64-setup.exe.sig'], '1.2.3', 'windows-x86_64'), 'PandaCode_1.2.3_x64-setup.exe');
-  assert.equal(selectPackage(['PandaCode_1.2.3_amd64.AppImage'], '1.2.3', 'linux-x86_64'), 'PandaCode_1.2.3_amd64.AppImage');
-  assert.equal(selectPackage(['PandaCode_1.2.3_aarch64.AppImage'], '1.2.3', 'linux-aarch64'), 'PandaCode_1.2.3_aarch64.AppImage');
-  assert.throws(() => selectPackage(['PandaCode_1.2.2_amd64.AppImage'], '1.2.3', 'linux-x86_64'), /exactly one/);
-  assert.throws(() => selectPackage(Array(101).fill('PandaCode_1.2.3_amd64.AppImage'), '1.2.3', 'linux-x86_64'), /exactly one/);
+  assert.equal(selectPackage([`${tauriProduct}_1.2.3_arm64-setup.exe`], '1.2.3', 'windows-aarch64'), `${tauriProduct}_1.2.3_arm64-setup.exe`);
+  assert.equal(selectPackage([`${tauriProduct}_1.2.3_x64-setup.exe`, `${tauriProduct}_1.2.3_x64-setup.exe.sig`], '1.2.3', 'windows-x86_64'), `${tauriProduct}_1.2.3_x64-setup.exe`);
+  assert.equal(selectPackage([`${tauriProduct}_1.2.3_amd64.AppImage`], '1.2.3', 'linux-x86_64'), `${tauriProduct}_1.2.3_amd64.AppImage`);
+  assert.equal(selectPackage([`${tauriProduct}_1.2.3_aarch64.AppImage`], '1.2.3', 'linux-aarch64'), `${tauriProduct}_1.2.3_aarch64.AppImage`);
+  assert.throws(() => selectPackage([`${tauriProduct}_1.2.2_amd64.AppImage`], '1.2.3', 'linux-x86_64'), /exactly one/);
+  assert.throws(() => selectPackage(Array(101).fill(`${tauriProduct}_1.2.3_amd64.AppImage`), '1.2.3', 'linux-x86_64'), /exactly one/);
 });
 
 test('isolated app data and literal NSIS arguments do not inherit credentials', () => {

@@ -9,7 +9,7 @@
 // (the release workflow's secret) the build also produces the signed update file and
 // its `.sig` for the in-app updater.
 import { readFile, writeFile, mkdir, copyFile, readdir, readlink, mkdtemp, rmdir, chmod } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -116,7 +116,7 @@ async function verifyDmg(path, app, releaseVersion) {
     await run('/usr/bin/hdiutil', ['attach', path, '-readonly', '-nobrowse', '-noautoopen', '-mountpoint', mount, '-quiet']);
     mounted = true;
     if (await readlink(resolve(mount, 'Applications')) !== '/Applications') throw new Error('The disk image is missing its Applications shortcut.');
-    const installed = resolve(mount, 'PandaCode.app');
+    const installed = resolve(mount, basename(app));
     await run('/usr/bin/codesign', ['--verify', '--deep', '--strict', installed]);
     const installedVersion = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleShortVersionString', resolve(installed, 'Contents/Info.plist')], { encoding: 'utf8' }).trim();
     if (installedVersion !== releaseVersion || await digest(resolve(installed, 'Contents/MacOS/pandacode')) !== await digest(resolve(app, 'Contents/MacOS/pandacode'))) throw new Error('The disk image contains a different app build.');
@@ -140,7 +140,8 @@ async function main() {
   const bundleDir = resolve(bundleRoot, config.bundleDir);
   const source = resolve(bundleDir, builtArtifact(await readdir(bundleDir), releaseVersion, releaseTarget));
   if (releaseTarget.startsWith('darwin-')) {
-    const app = resolve(bundleRoot, 'macos/PandaCode.app');
+    const appName = (await json(resolve(root, 'src-tauri/tauri.conf.json'))).productName;
+    const app = resolve(bundleRoot, `macos/${appName}.app`);
     await verifyMacApp(app, build.signing.mode);
     await verifyDmg(source, app, releaseVersion);
   }

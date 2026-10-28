@@ -3,6 +3,7 @@
  * background, and installs it with a restart once no agent is working and the
  * window has been idle. Every download is verified against the public key built
  * into the app. The request carries no personal data. The browser preview never checks. */
+import { PRODUCT_NAME } from './brand';
 import { call, preview } from './bridge';
 import { CHECK_EVERY, readyToRestart, type UpdateState } from './app-updates-policy';
 export { describeUpdate, type UpdateState } from './app-updates-policy';
@@ -73,7 +74,7 @@ export function startAppUpdates(host: UpdatesHost): AppUpdates {
 
   async function restart(): Promise<void> {
     if (!pending) return;
-    if (host.busy()) { host.notify('PandaCode will restart to update when your agents finish.'); return; }
+    if (host.busy()) { host.notify(`${PRODUCT_NAME} will restart to update when your agents finish.`); return; }
     if (state.kind === 'available') { try { await download(pending); } catch (cause) { set({ kind: 'error', message: message(cause) }); return; } }
     const version = pending.version;
     set({ kind: 'installing', version });

@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildPlan, builtArtifact, checksumLine, macosSigning } from './build.mjs';
 import { appImageBundleOptions } from './common.mjs';
+
+const tauriProduct = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../src-tauri/tauri.conf.json'), 'utf8')).productName;
 
 const env = { PANDACODE_LICENSE_PUBLIC_KEY: 'stale', PANDACODE_UPDATE_PUBLIC_KEY: 'stale', TAURI_SIGNING_PRIVATE_KEY: 'stale', APPLE_ID: 'someone', APPLE_SIGNING_IDENTITY: 'Developer ID Application: Someone', PATH: 'test-path' };
 const config = plan => JSON.parse(plan.args.at(-1));
@@ -63,7 +68,7 @@ test('Developer ID signing requires a real identity and notarization credentials
 });
 
 test('the build selects the exact versioned bundle Tauri produced', () => {
-  for (const [target, file] of [['windows-x86_64', 'PandaCode_1.2.3_x64-setup.exe'], ['linux-x86_64', 'PandaCode_1.2.3_amd64.AppImage'], ['darwin-aarch64', 'PandaCode_1.2.3_aarch64.dmg'], ['darwin-x86_64', 'PandaCode_1.2.3_x64.dmg']]) {
+  for (const [target, file] of [['windows-x86_64', `${tauriProduct}_1.2.3_x64-setup.exe`], ['linux-x86_64', `${tauriProduct}_1.2.3_amd64.AppImage`], ['darwin-aarch64', `${tauriProduct}_1.2.3_aarch64.dmg`], ['darwin-x86_64', `${tauriProduct}_1.2.3_x64.dmg`]]) {
     assert.equal(builtArtifact([file, file.replace('1.2.3', '1.2.2')], '1.2.3', target), file);
     assert.throws(() => builtArtifact([file], '1.2.4', target), /did not produce/);
   }

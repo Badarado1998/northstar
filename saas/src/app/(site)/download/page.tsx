@@ -29,6 +29,16 @@ export default async function DownloadPage() {
         </li>
       ))}
     </ul>
+    {anyPublished ? <section className="panel mt-6 space-y-3 p-6 text-sm leading-7 text-ink/80">
+      <h2 className="font-serif text-2xl text-ink">macOS: “cannot verify” or “not opened”</h2>
+      <p>Public builds are not Apple-notarized yet, so Gatekeeper may block the first launch. That is expected — use <strong>Open Anyway</strong>, not Move to Bin.</p>
+      <ol className="list-decimal space-y-2 pl-5">
+        <li>Drag the app from the DMG into <strong>Applications</strong>.</li>
+        <li><strong>Control-click</strong> (or right-click) the app in Applications → <strong>Open</strong> → confirm <strong>Open</strong> once.</li>
+        <li>Or open <strong>System Settings → Privacy &amp; Security</strong> and choose <strong>Open Anyway</strong> for the blocked app.</li>
+      </ol>
+      <p className="text-ink/70">Installers built after this rename ship as {BRAND.productName}.app. Older builds may still say PandaCode until you download a newer release. Signed and notarized installers require an Apple Developer ID in the release pipeline.</p>
+    </section> : null}
     {catalog.releaseNotes ? <section className="panel mt-6 p-6 text-sm leading-7 text-ink/80"><h2 className="font-serif text-2xl text-ink">Release notes</h2><p className="mt-3 whitespace-pre-wrap">{catalog.releaseNotes}</p></section> : null}
     {!anyPublished ? <section className="panel mt-8 space-y-4 p-6 text-sm leading-7 text-ink/80">
       <h2 className="font-serif text-2xl text-ink">Installers not live yet</h2>

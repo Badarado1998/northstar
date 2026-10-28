@@ -7,7 +7,16 @@ import { resolve } from 'node:path';
 
 export const root = fileURLToPath(new URL('../../', import.meta.url));
 
-const TAURI_PRODUCT = 'PandaCode';
+export function tauriProductName() {
+  try {
+    const name = JSON.parse(readFileSync(resolve(root, 'src-tauri/tauri.conf.json'), 'utf8')).productName;
+    return typeof name === 'string' && name.trim() ? name.trim() : 'PandaCode';
+  } catch {
+    return 'PandaCode';
+  }
+}
+
+const TAURI_PRODUCT = tauriProductName();
 
 /** Stable GitHub Release file names (from brand.json `installerProductName` or `productName`). */
 export function releaseAssetPrefix() {
@@ -23,8 +32,8 @@ export function releaseAssetPrefix() {
 
 function makeTargets(prefix) {
   return {
-    'darwin-aarch64': { platform: 'darwin', arch: 'arm64', triple: 'aarch64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `${TAURI_PRODUCT}_${v}_aarch64.dmg`, asset: `${prefix}-macOS-arm64.dmg`, updater: () => 'macos/PandaCode.app.tar.gz', updaterAsset: `${prefix}-macOS-arm64.app.tar.gz` },
-    'darwin-x86_64': { platform: 'darwin', arch: 'x64', triple: 'x86_64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `${TAURI_PRODUCT}_${v}_x64.dmg`, asset: `${prefix}-macOS-x64.dmg`, updater: () => 'macos/PandaCode.app.tar.gz', updaterAsset: `${prefix}-macOS-x64.app.tar.gz` },
+    'darwin-aarch64': { platform: 'darwin', arch: 'arm64', triple: 'aarch64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `${TAURI_PRODUCT}_${v}_aarch64.dmg`, asset: `${prefix}-macOS-arm64.dmg`, updater: () => `macos/${TAURI_PRODUCT}.app.tar.gz`, updaterAsset: `${prefix}-macOS-arm64.app.tar.gz` },
+    'darwin-x86_64': { platform: 'darwin', arch: 'x64', triple: 'x86_64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `${TAURI_PRODUCT}_${v}_x64.dmg`, asset: `${prefix}-macOS-x64.dmg`, updater: () => `macos/${TAURI_PRODUCT}.app.tar.gz`, updaterAsset: `${prefix}-macOS-x64.app.tar.gz` },
     'windows-x86_64': { platform: 'win32', arch: 'x64', triple: 'x86_64-pc-windows-msvc', bundles: 'nsis', bundleDir: 'nsis', built: v => `${TAURI_PRODUCT}_${v}_x64-setup.exe`, asset: `${prefix}-Windows-x64-setup.exe`, updater: v => `nsis/${TAURI_PRODUCT}_${v}_x64-setup.exe`, updaterAsset: `${prefix}-Windows-x64-setup.exe` },
     'windows-aarch64': { platform: 'win32', arch: 'arm64', triple: 'aarch64-pc-windows-msvc', bundles: 'nsis', bundleDir: 'nsis', built: v => `${TAURI_PRODUCT}_${v}_arm64-setup.exe`, asset: `${prefix}-Windows-arm64-setup.exe`, updater: v => `nsis/${TAURI_PRODUCT}_${v}_arm64-setup.exe`, updaterAsset: `${prefix}-Windows-arm64-setup.exe` },
     'linux-x86_64': { platform: 'linux', arch: 'x64', triple: 'x86_64-unknown-linux-gnu', bundles: 'appimage', bundleDir: 'appimage', built: v => `${TAURI_PRODUCT}_${v}_amd64.AppImage`, asset: `${prefix}-Linux-x86_64.AppImage`, updater: v => `appimage/${TAURI_PRODUCT}_${v}_amd64.AppImage`, updaterAsset: `${prefix}-Linux-x86_64.AppImage` },
