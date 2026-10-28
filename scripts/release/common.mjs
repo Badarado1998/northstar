@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
+import { createReadStream, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -7,18 +7,36 @@ import { resolve } from 'node:path';
 
 export const root = fileURLToPath(new URL('../../', import.meta.url));
 
+const TAURI_PRODUCT = 'PandaCode';
+
+/** Stable GitHub Release file names (from brand.json `installerProductName` or `productName`). */
+export function releaseAssetPrefix() {
+  try {
+    const brand = JSON.parse(readFileSync(resolve(root, 'brand.json'), 'utf8'));
+    const raw = brand.installerProductName || brand.productName || TAURI_PRODUCT;
+    const name = String(raw).trim().replace(/[^\w.-]+/g, '');
+    return name || TAURI_PRODUCT;
+  } catch {
+    return TAURI_PRODUCT;
+  }
+}
+
+function makeTargets(prefix) {
+  return {
+    'darwin-aarch64': { platform: 'darwin', arch: 'arm64', triple: 'aarch64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `${TAURI_PRODUCT}_${v}_aarch64.dmg`, asset: `${prefix}-macOS-arm64.dmg`, updater: () => 'macos/PandaCode.app.tar.gz', updaterAsset: `${prefix}-macOS-arm64.app.tar.gz` },
+    'darwin-x86_64': { platform: 'darwin', arch: 'x64', triple: 'x86_64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `${TAURI_PRODUCT}_${v}_x64.dmg`, asset: `${prefix}-macOS-x64.dmg`, updater: () => 'macos/PandaCode.app.tar.gz', updaterAsset: `${prefix}-macOS-x64.app.tar.gz` },
+    'windows-x86_64': { platform: 'win32', arch: 'x64', triple: 'x86_64-pc-windows-msvc', bundles: 'nsis', bundleDir: 'nsis', built: v => `${TAURI_PRODUCT}_${v}_x64-setup.exe`, asset: `${prefix}-Windows-x64-setup.exe`, updater: v => `nsis/${TAURI_PRODUCT}_${v}_x64-setup.exe`, updaterAsset: `${prefix}-Windows-x64-setup.exe` },
+    'windows-aarch64': { platform: 'win32', arch: 'arm64', triple: 'aarch64-pc-windows-msvc', bundles: 'nsis', bundleDir: 'nsis', built: v => `${TAURI_PRODUCT}_${v}_arm64-setup.exe`, asset: `${prefix}-Windows-arm64-setup.exe`, updater: v => `nsis/${TAURI_PRODUCT}_${v}_arm64-setup.exe`, updaterAsset: `${prefix}-Windows-arm64-setup.exe` },
+    'linux-x86_64': { platform: 'linux', arch: 'x64', triple: 'x86_64-unknown-linux-gnu', bundles: 'appimage', bundleDir: 'appimage', built: v => `${TAURI_PRODUCT}_${v}_amd64.AppImage`, asset: `${prefix}-Linux-x86_64.AppImage`, updater: v => `appimage/${TAURI_PRODUCT}_${v}_amd64.AppImage`, updaterAsset: `${prefix}-Linux-x86_64.AppImage` },
+    'linux-aarch64': { platform: 'linux', arch: 'arm64', triple: 'aarch64-unknown-linux-gnu', bundles: 'appimage', bundleDir: 'appimage', built: v => `${TAURI_PRODUCT}_${v}_aarch64.AppImage`, asset: `${prefix}-Linux-aarch64.AppImage`, updater: v => `appimage/${TAURI_PRODUCT}_${v}_aarch64.AppImage`, updaterAsset: `${prefix}-Linux-aarch64.AppImage` },
+  };
+}
+
 // One entry per published desktop build. `asset` is the stable file name on a
-// GitHub Release, so https://github.com/aicodeking/pandacode/releases/latest/download/<asset>
+// GitHub Release, so https://github.com/<owner>/<repo>/releases/latest/download/<asset>
 // always points at the newest build for that platform. `updater` is the signed file the
 // in-app updater installs (relative to the bundle directory), published as `updaterAsset`.
-export const targets = Object.freeze({
-  'darwin-aarch64': { platform: 'darwin', arch: 'arm64', triple: 'aarch64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `PandaCode_${v}_aarch64.dmg`, asset: 'PandaCode-macOS-arm64.dmg', updater: () => 'macos/PandaCode.app.tar.gz', updaterAsset: 'PandaCode-macOS-arm64.app.tar.gz' },
-  'darwin-x86_64': { platform: 'darwin', arch: 'x64', triple: 'x86_64-apple-darwin', bundles: 'app,dmg', bundleDir: 'dmg', built: v => `PandaCode_${v}_x64.dmg`, asset: 'PandaCode-macOS-x64.dmg', updater: () => 'macos/PandaCode.app.tar.gz', updaterAsset: 'PandaCode-macOS-x64.app.tar.gz' },
-  'windows-x86_64': { platform: 'win32', arch: 'x64', triple: 'x86_64-pc-windows-msvc', bundles: 'nsis', bundleDir: 'nsis', built: v => `PandaCode_${v}_x64-setup.exe`, asset: 'PandaCode-Windows-x64-setup.exe', updater: v => `nsis/PandaCode_${v}_x64-setup.exe`, updaterAsset: 'PandaCode-Windows-x64-setup.exe' },
-  'windows-aarch64': { platform: 'win32', arch: 'arm64', triple: 'aarch64-pc-windows-msvc', bundles: 'nsis', bundleDir: 'nsis', built: v => `PandaCode_${v}_arm64-setup.exe`, asset: 'PandaCode-Windows-arm64-setup.exe', updater: v => `nsis/PandaCode_${v}_arm64-setup.exe`, updaterAsset: 'PandaCode-Windows-arm64-setup.exe' },
-  'linux-x86_64': { platform: 'linux', arch: 'x64', triple: 'x86_64-unknown-linux-gnu', bundles: 'appimage', bundleDir: 'appimage', built: v => `PandaCode_${v}_amd64.AppImage`, asset: 'PandaCode-Linux-x86_64.AppImage', updater: v => `appimage/PandaCode_${v}_amd64.AppImage`, updaterAsset: 'PandaCode-Linux-x86_64.AppImage' },
-  'linux-aarch64': { platform: 'linux', arch: 'arm64', triple: 'aarch64-unknown-linux-gnu', bundles: 'appimage', bundleDir: 'appimage', built: v => `PandaCode_${v}_aarch64.AppImage`, asset: 'PandaCode-Linux-aarch64.AppImage', updater: v => `appimage/PandaCode_${v}_aarch64.AppImage`, updaterAsset: 'PandaCode-Linux-aarch64.AppImage' },
-});
+export const targets = Object.freeze(makeTargets(releaseAssetPrefix()));
 
 export function targetConfig(value) {
   if (typeof value !== 'string' || !Object.hasOwn(targets, value)) throw new Error(`Unsupported release target. Choose one of: ${Object.keys(targets).join(', ')}.`);
