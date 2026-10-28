@@ -8,7 +8,7 @@ await saveDownloadCatalog(db, {
   macIntel: brand.downloads.macIntel ?? '',
   windowsX64: brand.downloads.windowsX64 ?? '',
   windowsArm: brand.downloads.windowsArm ?? '',
-  version: '0.3.28',
-  releaseNotes: 'Northstar desktop 0.3.28 — install from app.bada.com.ng/download',
+  version: '0.3.29',
+  releaseNotes: 'Northstar desktop 0.3.29 — Northstar.app branding; install from app.bada.com.ng/download',
 });
 console.log('Synced desktop_downloads from brand.json to the database.');
